@@ -3,6 +3,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.lang.reflect.Array;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -23,6 +24,15 @@ public class Main {
     // Contains all the words found in training documents.
     static Model model = new Model();
 
+    // used to print double values in better format
+    static DecimalFormat decFormat = new DecimalFormat("#0.000");
+
+    static long timeTraining;
+    static long timeLabeling;
+    static double accTraining;
+    static double accTesting;
+
+
     public static void main(String[] args) {
 
         if(args.length != 2) {
@@ -30,17 +40,25 @@ public class Main {
             System.exit(1);
         }
 
-        // Read training file
+        // train model, time how long it takes
         File trainingFile = new File(args[0]);
         long startTime = System.currentTimeMillis();
         trainModel(trainingFile);
         long endTime = System.currentTimeMillis();
-        System.out.println("That took " + (endTime - startTime) + " milliseconds");
+        timeTraining = (endTime-startTime)/1000;
 
-        // Read test file
+        // evaluate model on the training file
+        testOnTrainingFile(trainingFile);
+
+        // evaluate model on test file, time how long it takes
+        startTime = System.currentTimeMillis();
         File testFile = new File(args[1]);
         testModel(testFile);
+        endTime = System.currentTimeMillis();
+        timeLabeling = (endTime-startTime)/1000;
 
+        // print results
+        printResults();
     }
 
     // load training file to train model
@@ -58,10 +76,7 @@ public class Main {
             System.exit(1);
         }
 
-        System.out.println("Size of document for class 1: " + model.documentMap.get(1).size());
         model.optimize();
-        System.out.println("Size for class 1 post-trim: " + model.documentMap.get(1).size());
-
     }
 
     // returns string[], where [0] is the words and [1] is the class
@@ -76,11 +91,13 @@ public class Main {
         String[] words = parsedLine[0].split("\\s+");
         int label = Integer.parseInt(parsedLine[1]);
 
-        // add the words to the corresponding label
-        ArrayList<String> updatedWords = model.documentMap.get(label);
-        updatedWords.addAll(Arrays.asList(words));
-        model.documentMap.replace(label, updatedWords);
-        model.documentLabelsSeen.add(label);
+        // only consider 1/3 of the document to speed up training.
+        ArrayList<String> splitDoc = new ArrayList<>();
+        for (int i = 0; i<words.length/3; i++){
+            splitDoc.add(words[i]);
+        }
+
+        model.documentMap.get(label).addAll(splitDoc);
 
         // add any new words into model.vocab
         model.vocab.addAll(Arrays.asList(words));
@@ -98,17 +115,56 @@ public class Main {
             System.err.println("Cannot open test file.");
             System.exit(1);
         }
+
+        accTesting = (double) numTestCorrect/numTestLines;
     }
 
+    static int numTestLines = 0;
+    static int numTestCorrect = 0;
+    // process each document in test file and print the guessed label
     private static void processTestLine(String line){
+        numTestLines++;
         String[] parsedLine = splitLine(line);
         String[] words = parsedLine[0].split("\\s+");
         int label = Integer.parseInt(parsedLine[1]);
 
         ArrayList<String> wordsList = new ArrayList<>(Arrays.asList(words));
         int guessedLabel = model.guessClassLabel(wordsList);
-        System.out.println("Expected label: " + label);
-        System.out.println("Guessed label: " + guessedLabel);
+        if(label == guessedLabel) numTestCorrect++;
+        System.out.println(guessedLabel);
     }
 
+    // run model on training file
+    static int numTrainingLines = 0;
+    static int numCorrect = 0;
+    private static void testOnTrainingFile(File file){
+        try (BufferedReader br = new BufferedReader(new FileReader(file))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                // process the line.
+                processTrainingTestLine(line);
+            }
+        } catch (IOException ioException) {
+            System.err.println("Cannot open test file.");
+            System.exit(1);
+        }
+
+        accTraining = (double) numCorrect/numTrainingLines;
+    }
+
+    private static void processTrainingTestLine(String line){
+        numTrainingLines++;
+        String[] parsedLine = splitLine(line);
+        String[] words = parsedLine[0].split("\\s+");
+        int label = Integer.parseInt(parsedLine[1]);
+        if(model.guessClassLabel(new ArrayList<>(Arrays.asList(words))) == label)
+            numCorrect++;
+    }
+
+    private static void printResults(){
+        System.out.println(timeTraining + " seconds (training)");
+        System.out.println(timeLabeling + " seconds (labeling)");
+        System.out.println(decFormat.format(accTraining) + " (training)");
+        System.out.println(decFormat.format(accTesting) + " (testing)");
+    }
 }
