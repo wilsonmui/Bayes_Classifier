@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="WebServers">
+    <option name="servers">
+      <webServer id="8c97f58f-1bba-4367-90ae-00ce3f0333d0" name="csil-14.cs.ucsb.edu" url="http://csil-14.cs.ucsb.edu/">
+        <fileTransfer host="csil-14.cs.ucsb.edu" port="22" rootFolder="/fs/student/wmui" accessType="SFTP">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" />
+          </advancedOptions>
+          <option name="port" value="22" />
+        </fileTransfer>
+      </webServer>
+    </option>
+  </component>
+</project>

@@ -1,0 +1,7 @@
+One way to run program is to 'make' it and then call the NaiveBayesClassifier class with argument files:
+
+make
+java NaiveBayesClassifier training.txt testing.txt
+
+Note that the txt files should be in the same path as where the java file is being called from.
+

@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="\NaiveBayesClassifier:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/_NaiveBayesClassifier_jar</output-path>
+    <root id="archive" name="Bayes_Classifier.jar">
+      <element id="module-output" name="Bayes_Classifier" />
+    </root>
+  </artifact>
+</component>
